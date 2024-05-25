@@ -1,5 +1,5 @@
 from rest_framework.views import APIView
-from rest_framework import serializers, status, permissions
+from rest_framework import serializers, status, permissions, generics
 from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
@@ -9,6 +9,9 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class RegisterView(APIView):
+    """
+    API view to creates a new user account.
+    """
     class InputSerializer(serializers.ModelSerializer):
         """
         Serializer for user account registration.
@@ -32,7 +35,7 @@ class RegisterView(APIView):
         
     def post(self, request):
         """
-        Creates a new user account.
+        POST: Creates a new user account.
         """
         serializer = self.InputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -80,3 +83,17 @@ class LogoutView(APIView):
                 "msg": "Token not found or invalid."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+class UserListView(generics.ListAPIView):
+    """
+    Displays list of users, excluding the authenticated user.
+    """
+    class OutputSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = User
+            fields = ['id', 'first_name', 'last_name']   
+
+    serializer_class = OutputSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.exclude(id=self.request.user.id)
