@@ -48,9 +48,7 @@ python manage.py runserver
 
 ## API Documentation
 
-### User Registration API
-
-#### 1. Creates a New User Account
+### 1. User Registration
 
 Endpoint: `POST /api/register/`
 
@@ -86,7 +84,7 @@ Response:
 }
 ```
 
-#### 2. Login to your Account
+### 2. Login to your Account
 
 Endpoint: `POST /api/login/`
 
@@ -113,7 +111,7 @@ Response:
 }
 ```
 
-#### 3. Logout
+### 3. Logout
 
 Endpoint: `POST /api/logout/`
 
@@ -139,7 +137,7 @@ Response:
 {}
 ```
 
-#### 3. Display Users List Except Authenticated User
+### 4. Display Users List Except Authenticated User
 
 Endpoint: `POST /api/users/`
 

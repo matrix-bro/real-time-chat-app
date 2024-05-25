@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractBaseUser, PermissionsMixin
 import uuid
+from django.conf import settings
+from django.utils.text import Truncator
 
 class UserAccountManager(BaseUserManager):
     def create_user(self, first_name, last_name, email, password=None):
@@ -45,3 +47,37 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+    
+class Conversation(models.Model):
+    """
+    Model representing a Conversation between Users.
+    - Many to Many Relationship with User Model.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    members = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='conversations')
+    created_at = models.DateTimeField(auto_now_add=True)
+    modified_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ('-modified_at', )
+
+    def __str__(self):
+        return f"Conversation between {' & '.join(self.members.all().values_list('email', flat=True))}"
+
+class ConversationMessage(models.Model):
+    """
+    Model representing a message within a conversation.
+    - Foreign key relationship with Conversation model.
+    - Foreign key relationship with User model.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    conversation = models.ForeignKey(Conversation, related_name='messages', on_delete=models.CASCADE)
+    text = models.TextField()
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='created_messages', on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ('-created_at', )
+    
+    def __str__(self):
+        return f"{self.sender} --- to --- {self.conversation.members.exclude(email=self.sender).first()} ------ {Truncator(self.text).words(5)}"    
