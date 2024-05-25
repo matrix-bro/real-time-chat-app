@@ -8,4 +8,5 @@ urlpatterns = [
     path('logout/', TokenBlacklistView.as_view(), name='logout'),
 
     path('users/', views.UserListView.as_view(), name='users_list'),
+    path('users/<uuid:pk>/chat/', views.UserChatView.as_view(), name='user_chat'),
 ]

@@ -3,8 +3,9 @@ from rest_framework import serializers, status, permissions, generics
 from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from rest_framework_simplejwt.tokens import RefreshToken
 from app.services.user_services import create_user_account
+from django.shortcuts import get_object_or_404
+from app.models import Conversation, ConversationMessage
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -74,3 +75,62 @@ class UserListView(generics.ListAPIView):
 
     def get_queryset(self):
         return User.objects.exclude(id=self.request.user.id)
+    
+class UserChatView(APIView):
+    """
+    API view to display conversation (chat) between users
+    """
+    class OutputSerializer(serializers.ModelSerializer):
+        """
+        Serializer for outputting conversation with all messages and their senders
+        """
+        class MessageSerializer(serializers.ModelSerializer):
+            class UserSerializer(serializers.ModelSerializer):
+                class Meta:
+                    model = User
+                    fields = ['id', 'first_name', 'last_name']
+
+            sender = UserSerializer()
+
+            class Meta:
+                model = ConversationMessage
+                fields = ['text', 'sender', 'created_at']
+        
+        messages = MessageSerializer(many=True)
+
+        class Meta:
+            model = Conversation
+            fields = ['id', 'messages']
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, pk):
+        """
+        GET: Displays a conversation with messages between users (authenticated user and recipient user)
+        - pk: recipientUserId
+        """
+        recipientUser = get_object_or_404(User, pk=pk)
+
+        # Check if recipient and request.user is same
+        if recipientUser == request.user:
+            return Response({
+                'success': False,
+                'msg': 'Invalid recipient.',
+                'status': status.HTTP_400_BAD_REQUEST,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Get Conversation if it exists or Create conversation if it doesn't exist
+        conversation = Conversation.objects.filter(members=request.user).filter(members=recipientUser).first()
+        if not conversation:
+            conversation = Conversation.objects.create()
+            conversation.members.add(request.user)
+            conversation.members.add(recipientUser)
+            conversation.save()
+        
+        response = self.OutputSerializer(conversation)
+        return Response({
+            'success': True,
+            'success': 'User conversation with messages retrieved successfully.',
+            'data': response.data,
+            'status': status.HTTP_200_OK,
+        }, status=status.HTTP_200_OK)

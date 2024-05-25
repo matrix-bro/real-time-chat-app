@@ -166,3 +166,49 @@ Response:
   }
 ]
 ```
+
+### 5. Display Users Chat (Conversation)
+
+Endpoint: `POST /api/users/<uuid:pk>/chat/`
+
+- `pk: recipientId`
+  - Example: `497ed80f-66de-45e7-801b-3a29710aa5fb`
+
+Request:
+
+- Method: `GET`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {your_access_token}`
+
+Response:
+
+```json
+{
+  "success": "User conversation with messages retrieved successfully.",
+  "data": {
+    "id": "92660037-7f6e-4934-afd5-218024692005", // conversation_id
+    "messages": [
+      {
+        "text": "Hello admin",
+        "sender": {
+          "id": "c68872ef-dcfa-470b-a0b6-161d213d1c90",
+          "first_name": "john",
+          "last_name": "doe"
+        },
+        "created_at": "2024-05-25T10:31:10.245597Z"
+      },
+      {
+        "text": "Hi john",
+        "sender": {
+          "id": "497ed80f-66de-45e7-801b-3a29710aa5fb",
+          "first_name": "admin",
+          "last_name": "admin"
+        },
+        "created_at": "2024-05-25T10:30:59.838568Z"
+      }
+    ]
+  },
+  "status": 200
+}
+```
