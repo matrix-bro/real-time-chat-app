@@ -60,29 +60,6 @@ class RegisterView(APIView):
             'status': status.HTTP_201_CREATED,
         }, status=status.HTTP_201_CREATED)
     
-class LogoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def post(self, request):
-        """
-        Log out a user by blacklisting their refresh token.
-        """
-        try:
-            # Blacklist the refresh_token
-            refresh_token = request.data['refresh_token']
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-
-            return Response({
-                "success": True,
-                "msg": "Log out successful."
-            }, status=status.HTTP_205_RESET_CONTENT)
-        except:
-            return Response({
-                "success": False,
-                "msg": "Token not found or invalid."
-            }, status=status.HTTP_400_BAD_REQUEST)
-
 class UserListView(generics.ListAPIView):
     """
     Displays list of users, excluding the authenticated user.
