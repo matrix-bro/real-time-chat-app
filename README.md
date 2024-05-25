@@ -1,6 +1,6 @@
 # Real Time Chat App
 
-This is a Real Time Chat Application using Django Rest Framework.
+This is a Real Time Chat Application created using Django Rest Framework.
 
 ## Run this project locally
 
