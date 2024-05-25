@@ -1,8 +1,9 @@
 from rest_framework.views import APIView
-from rest_framework import serializers, status
+from rest_framework import serializers, status, permissions
 from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from rest_framework_simplejwt.tokens import RefreshToken
 from app.services.user_services import create_user_account
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -55,3 +56,27 @@ class RegisterView(APIView):
             'data': response.data,
             'status': status.HTTP_201_CREATED,
         }, status=status.HTTP_201_CREATED)
+    
+class LogoutView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        """
+        Log out a user by blacklisting their refresh token.
+        """
+        try:
+            # Blacklist the refresh_token
+            refresh_token = request.data['refresh_token']
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            return Response({
+                "success": True,
+                "msg": "Log out successful."
+            }, status=status.HTTP_205_RESET_CONTENT)
+        except:
+            return Response({
+                "success": False,
+                "msg": "Token not found or invalid."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
