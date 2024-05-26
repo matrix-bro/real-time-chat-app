@@ -1,6 +1,29 @@
 # Real Time Chat App
 
-This is a Real Time Chat Application created using Django Rest Framework.
+## Overview
+
+This Real-Time Chat Application is built using Django Rest Framework (DRF) for handling RESTful APIs and Django Channels for WebSocket communication, enabling real-time messaging between users.
+
+## Features
+
+- User Authentication: Implements user authentication using Simple JWT.
+- Real-Time Messaging: Utilizes WebSocket communication via Django Channels for instant message delivery.
+
+## Project Structure
+
+- `app/` : Contains Django application for user authentication and chat functionality.
+  - `services/` : Contains small services for user and chat functionality
+  - `tests/` :
+    - `test_consumer.py` : Contains test cases for WebSocket consumers
+  - `channel_auth_middleware.py` : Custom JWT Auth Middleware for Websocket Authentication
+  - `consumers.py` : Defines WebSocket consumer for **Real-Time Messaging**.
+  - `models.py` : Defines the models for User, Conversation and Message.
+  - `routing.py` : Defines routing configuration for WebSocket connections.
+  - `url.py` : Defines URL patterns for RESTful APIs.
+  - `views.py` : Defines API views for handling user registration, displaying users and conversations.
+- `project/` : Main Project folder - contains settings and configuration files.
+  - `settings.py` : Django settings including configuration for Django Rest Framework, Simple JWT, and Django Channels.
+  - `asgi.py` : ASGI application entry point for the project, including settings related to Django Channels.
 
 ## Run this project locally
 
