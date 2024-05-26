@@ -84,7 +84,7 @@ class ChatConsumerTests(TestCase):
         )
 
         # Here, first_user is logged in
-        communicator.scope['user'] = self.first_user   
+        communicator.scope['user'] = self.first_user
         connected, _ = await communicator.connect()
 
         # Should not be able to connect
@@ -106,13 +106,13 @@ class ChatConsumerTests(TestCase):
         communicator.scope['user'] = self.first_user
         connected, _ = await communicator.connect()
 
-        # Should not be able to connect
+        # Should be able to connect
         assert connected
 
     async def test_send_message_to_self(self):
         """
         Test User 1 trying to message to self by changing -
-        recipientId to their own
+        recipient_id to their own
         """
         application = URLRouter([
             path('ws/chat/<str:conversation_id>/', ChatConsumer.as_asgi()),
@@ -121,7 +121,7 @@ class ChatConsumerTests(TestCase):
         communicator = WebsocketCommunicator(
             application, f"/ws/chat/{self.conversation.id}/"
         )
-        communicator.scope['user'] = self.first_user 
+        communicator.scope['user'] = self.first_user
         connected, _ = await communicator.connect()
 
         assert connected
@@ -129,7 +129,7 @@ class ChatConsumerTests(TestCase):
         # Test sending text to themself
         await communicator.send_json_to({
             "message": "Hi Test 1",
-            "recipientId": str(self.first_user.id)  # Own id as recipientID
+            "recipient_id": str(self.first_user.id)  # Own id as recipient_id
         })
 
         response = await communicator.receive_from()
@@ -146,7 +146,7 @@ class ChatConsumerTests(TestCase):
         communicator = WebsocketCommunicator(
             application, f"/ws/chat/{self.conversation.id}/"
         )
-        communicator.scope['user'] = self.first_user                                             
+        communicator.scope['user'] = self.first_user
         connected, _ = await communicator.connect()
 
         assert connected
@@ -154,7 +154,7 @@ class ChatConsumerTests(TestCase):
         # Test sending text from sender user to recipient user
         await communicator.send_json_to({
             "message": "Hi Test 1",
-            "recipientId": str(self.second_user.id)
+            "recipient_id": str(self.second_user.id)
         })
 
         response = await communicator.receive_json_from()
