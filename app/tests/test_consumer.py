@@ -1,11 +1,14 @@
-from django.test import TestCase
 from channels.routing import URLRouter
 from channels.testing import WebsocketCommunicator
-from django.urls import reverse, path
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import path, reverse
+
 from app.consumers import ChatConsumer
 from app.models import Conversation
-from django.contrib.auth import get_user_model
+
 User = get_user_model()
+
 
 class ChatConsumerTests(TestCase):
     def setUp(self):
@@ -39,17 +42,19 @@ class ChatConsumerTests(TestCase):
         self.register_url = reverse('register')
 
         # Register User 1
-        res = self.client.post(self.register_url, data=self.first_user_data)
+        self.client.post(self.register_url, data=self.first_user_data)
 
         # Register User 2
-        res = self.client.post(self.register_url, data=self.second_user_data)
+        self.client.post(self.register_url, data=self.second_user_data)
 
         # Register User 3
-        res = self.client.post(self.register_url, data=self.third_user_data)
+        self.client.post(self.register_url, data=self.third_user_data)
 
         # Get User 1 and User 2 and Create conversation between them
         self.first_user = User.objects.get(email=self.first_user_data['email'])
-        self.second_user = User.objects.get(email=self.second_user_data['email'])
+        self.second_user = User.objects.get(
+            email=self.second_user_data['email']
+        )
 
         # Create a conversation
         self.conversation = Conversation.objects.create()
@@ -64,7 +69,7 @@ class ChatConsumerTests(TestCase):
         self.conversation_two.members.add(self.second_user)
         self.conversation_two.members.add(self.third_user)
         self.conversation_two.save()
-    
+
     async def test_access_to_other_users_conversation(self):
         """
         Test User 1 trying to access User 2 and User 3 conversation
@@ -72,15 +77,19 @@ class ChatConsumerTests(TestCase):
         application = URLRouter([
             path('ws/chat/<str:conversation_id>/', ChatConsumer.as_asgi()),
         ])
-        
-        communicator = WebsocketCommunicator(application, f"/ws/chat/{self.conversation_two.id}/")
+
+        communicator = WebsocketCommunicator(
+            application,
+            f"/ws/chat/{self.conversation_two.id}/"
+        )
+
         # Here, first_user is logged in
         communicator.scope['user'] = self.first_user   
         connected, _ = await communicator.connect()
 
         # Should not be able to connect
-        assert connected == False
-    
+        assert not connected
+
     async def test_access_to_own_conversation(self):
         """
         Test User 1 trying to access his own conversation with User 2
@@ -88,33 +97,39 @@ class ChatConsumerTests(TestCase):
         application = URLRouter([
             path('ws/chat/<str:conversation_id>/', ChatConsumer.as_asgi()),
         ])
-        
-        communicator = WebsocketCommunicator(application, f"/ws/chat/{self.conversation.id}/")
+
+        communicator = WebsocketCommunicator(
+            application, f"/ws/chat/{self.conversation.id}/"
+        )
+
         # Here, first_user is logged in
-        communicator.scope['user'] = self.first_user   
+        communicator.scope['user'] = self.first_user
         connected, _ = await communicator.connect()
 
         # Should not be able to connect
-        assert connected == True
-    
+        assert connected
+
     async def test_send_message_to_self(self):
         """
-        Test User 1 trying to message to self by changing recipientId to their own
+        Test User 1 trying to message to self by changing -
+        recipientId to their own
         """
         application = URLRouter([
             path('ws/chat/<str:conversation_id>/', ChatConsumer.as_asgi()),
         ])
-        
-        communicator = WebsocketCommunicator(application, f"/ws/chat/{self.conversation.id}/")
-        communicator.scope['user'] = self.first_user   
+
+        communicator = WebsocketCommunicator(
+            application, f"/ws/chat/{self.conversation.id}/"
+        )
+        communicator.scope['user'] = self.first_user 
         connected, _ = await communicator.connect()
 
-        assert connected == True
+        assert connected
 
         # Test sending text to themself
         await communicator.send_json_to({
             "message": "Hi Test 1",
-            "recipientId": str(self.first_user.id) # Own id as recipientID
+            "recipientId": str(self.first_user.id)  # Own id as recipientID
         })
 
         response = await communicator.receive_from()
@@ -127,8 +142,10 @@ class ChatConsumerTests(TestCase):
         application = URLRouter([
             path('ws/chat/<str:conversation_id>/', ChatConsumer.as_asgi()),
         ])
-        
-        communicator = WebsocketCommunicator(application, f"/ws/chat/{self.conversation.id}/")
+
+        communicator = WebsocketCommunicator(
+            application, f"/ws/chat/{self.conversation.id}/"
+        )
         communicator.scope['user'] = self.first_user                                             
         connected, _ = await communicator.connect()
 

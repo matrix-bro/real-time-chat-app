@@ -253,11 +253,12 @@ Request:
   - `Origin: http://127.0.0.1:8000`
 - Params:
   - `token: {Your access token}`
+- Body:
 
 ```json
 {
   "message": "Hello",
-  "recipientId": "48dc569e-4ef2-4fef-940e-41a92ebfdcc2"
+  "recipient_id": "48dc569e-4ef2-4fef-940e-41a92ebfdcc2"
 }
 ```
 
@@ -266,6 +267,6 @@ Response:
 ```json
 {
   "message": "Hello",
-  "recipientId": "48dc569e-4ef2-4fef-940e-41a92ebfdcc2"
+  "recipient_id": "48dc569e-4ef2-4fef-940e-41a92ebfdcc2"
 }
 ```

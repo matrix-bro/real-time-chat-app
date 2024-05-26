@@ -3,11 +3,12 @@ from rest_framework import serializers, status, permissions, generics
 from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.contrib.auth import get_user_model
+from app.models import Conversation, ConversationMessage
 from app.services.user_services import create_user_account, get_user
 from app.services.chat_services import get_or_create_conversation
-from app.models import Conversation, ConversationMessage
-from django.contrib.auth import get_user_model
 User = get_user_model()
+
 
 class RegisterView(APIView):
     """
@@ -19,7 +20,8 @@ class RegisterView(APIView):
         """
         class Meta:
             model = User
-            fields = ('first_name', 'last_name', 'email', 'password', 'confirm_password')
+            fields = ('first_name', 'last_name', 'email', 'password',
+                      'confirm_password')
 
         password = serializers.CharField(write_only=True)
         confirm_password = serializers.CharField(write_only=True)
@@ -29,11 +31,12 @@ class RegisterView(APIView):
                 raise serializers.ValidationError({
                     'password': "Password fields didn't match."
                 })
-            
-            attrs.pop('confirm_password')   # Removing confirm_password from validated_data
+
+            # Removing confirm_password from validated_data
+            attrs.pop('confirm_password')
 
             return attrs
-        
+
     def post(self, request):
         """
         POST: Creates a new user account.
@@ -60,7 +63,8 @@ class RegisterView(APIView):
             'data': response.data,
             'status': status.HTTP_201_CREATED,
         }, status=status.HTTP_201_CREATED)
-    
+
+
 class UserListView(generics.ListAPIView):
     """
     Displays list of users, excluding the authenticated user.
@@ -68,21 +72,23 @@ class UserListView(generics.ListAPIView):
     class OutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = User
-            fields = ['id', 'first_name', 'last_name']   
+            fields = ['id', 'first_name', 'last_name']
 
     serializer_class = OutputSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         return User.objects.exclude(id=self.request.user.id)
-    
+
+
 class UserChatView(APIView):
     """
     API view to display conversation (chat) between users
     """
     class OutputSerializer(serializers.ModelSerializer):
         """
-        Serializer for outputting conversation with all messages and their senders
+        Serializer for outputting conversation -
+        with all messages and their senders
         """
         class MessageSerializer(serializers.ModelSerializer):
             class UserSerializer(serializers.ModelSerializer):
@@ -95,7 +101,7 @@ class UserChatView(APIView):
             class Meta:
                 model = ConversationMessage
                 fields = ['text', 'sender', 'created_at']
-        
+
         messages = MessageSerializer(many=True)
 
         class Meta:
@@ -106,22 +112,24 @@ class UserChatView(APIView):
 
     def get(self, request, pk):
         """
-        GET: Displays a conversation with messages between users (authenticated user and recipient user)
+        GET: Displays a conversation with messages between users-
+        (authenticated user and recipient user)
         - pk: recipientUserId
         """
-        recipientUser = get_user(pk)
+        recipient_user = get_user(pk)
 
         # Check if recipient and request.user is same
-        if recipientUser == request.user:
+        if recipient_user == request.user:
             return Response({
                 'success': False,
                 'msg': 'Invalid recipient.',
                 'status': status.HTTP_400_BAD_REQUEST,
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Get Conversation if it exists or Create conversation if it doesn't exist
-        conversation = get_or_create_conversation(request.user, recipientUser)
-        
+        # Get Conversation if it exists or
+        # Create conversation if it doesn't exist
+        conversation = get_or_create_conversation(request.user, recipient_user)
+
         response = self.OutputSerializer(conversation)
         return Response({
             'success': True,

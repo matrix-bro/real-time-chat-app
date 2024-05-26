@@ -135,7 +135,7 @@ SIMPLE_JWT = {
 # Django Channels
 # - Using InMemoryChannelLayer
 CHANNEL_LAYERS = {
-    'default':{
+    'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
 }
