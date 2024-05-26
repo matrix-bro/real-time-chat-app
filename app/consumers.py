@@ -1,7 +1,7 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from channels.db import database_sync_to_async
-from app.models import Conversation
+from app.models import Conversation, ConversationMessage
 from django.contrib.auth import get_user_model
 User = get_user_model()
 
@@ -51,6 +51,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 await self.close()
                 return
 
+            # Get conversation
+            conversation = await self.get_conversation(self.user, recipientUser)
+
+            # Save message to DB
+            await self.save_message(conversation, self.user, message)
+
             # Send message to room group
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -77,9 +83,24 @@ class ChatConsumer(AsyncWebsocketConsumer):
     
     @database_sync_to_async
     def validate_user_conversation(self, pk):
+        """
+        Get the Conversation of the authenticated user.
+        - Throws error if tries to access other user's conversation.
+        """
         return Conversation.objects.filter(id=pk).filter(members=self.user).get()
     
     @database_sync_to_async
     def get_user(self, pk):
         return User.objects.get(pk=pk)
-            
+
+    @database_sync_to_async
+    def get_conversation(self, senderUser, recipientUser):
+        """
+        Get the Conversation of Sender and Recipient
+        """
+        return Conversation.objects.filter(members=senderUser).filter(members=recipientUser).get()
+
+    @database_sync_to_async
+    def save_message(self, conversation, senderUser, message):
+        ConversationMessage.objects.create(conversation=conversation, text=message, sender=senderUser)
+    
