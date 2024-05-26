@@ -3,8 +3,8 @@ from rest_framework import serializers, status, permissions, generics
 from rest_framework.response import Response
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from app.services.user_services import create_user_account
-from django.shortcuts import get_object_or_404
+from app.services.user_services import create_user_account, get_user
+from app.services.chat_services import get_or_create_conversation
 from app.models import Conversation, ConversationMessage
 from django.contrib.auth import get_user_model
 User = get_user_model()
@@ -109,7 +109,7 @@ class UserChatView(APIView):
         GET: Displays a conversation with messages between users (authenticated user and recipient user)
         - pk: recipientUserId
         """
-        recipientUser = get_object_or_404(User, pk=pk)
+        recipientUser = get_user(pk)
 
         # Check if recipient and request.user is same
         if recipientUser == request.user:
@@ -120,17 +120,12 @@ class UserChatView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
         # Get Conversation if it exists or Create conversation if it doesn't exist
-        conversation = Conversation.objects.filter(members=request.user).filter(members=recipientUser).first()
-        if not conversation:
-            conversation = Conversation.objects.create()
-            conversation.members.add(request.user)
-            conversation.members.add(recipientUser)
-            conversation.save()
+        conversation = get_or_create_conversation(request.user, recipientUser)
         
         response = self.OutputSerializer(conversation)
         return Response({
             'success': True,
-            'success': 'User conversation with messages retrieved successfully.',
+            'msg': 'User conversation with messages retrieved successfully.',
             'data': response.data,
             'status': status.HTTP_200_OK,
         }, status=status.HTTP_200_OK)

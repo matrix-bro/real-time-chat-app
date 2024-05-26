@@ -185,7 +185,8 @@ Response:
 
 ```json
 {
-  "success": "User conversation with messages retrieved successfully.",
+  "success": true,
+  "msg": "User conversation with messages retrieved successfully.",
   "data": {
     "id": "92660037-7f6e-4934-afd5-218024692005", // conversation_id
     "messages": [
