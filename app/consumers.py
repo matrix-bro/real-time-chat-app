@@ -1,5 +1,9 @@
 from channels.generic.websocket import AsyncWebsocketConsumer
 import json
+from channels.db import database_sync_to_async
+from app.models import Conversation
+from django.contrib.auth import get_user_model
+User = get_user_model()
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -9,6 +13,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
 
         # If user is not authenticated, close the connection
         if not self.user.is_authenticated:
+            await self.close()
+
+        # Validate and Check if authenticated user is trying to access other users conversation
+        try:
+            await self.validate_user_conversation(self.room_name)
+        except:
             await self.close()
 
         # Join room group
@@ -31,16 +41,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = data['message']
         recipientId = data['recipientId']
 
-        # Send message to room group
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {
-                'type': 'chat_message',
-                'message': message,
-                'recipientId': recipientId,
+        try:
 
-            }
-        )
+            recipientUser = await self.get_user(recipientId)
+
+            # Check if request.user and recipient user is same
+            if recipientUser == self.user:
+                await self.send(text_data="Invalid recipient.")
+                await self.close()
+                return
+
+            # Send message to room group
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {
+                    'type': 'chat_message',
+                    'message': message,
+                    'recipientId': recipientId,
+
+                }
+            )
+
+        except Exception as e:
+            await self.send(text_data=f"Error: {e}")
+
     
     async def chat_message(self, event):
         message = event['message']
@@ -50,3 +74,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             'message': message,
             'recipientId': recipientId,
         }))
+    
+    @database_sync_to_async
+    def validate_user_conversation(self, pk):
+        return Conversation.objects.filter(id=pk).filter(members=self.user).get()
+    
+    @database_sync_to_async
+    def get_user(self, pk):
+        return User.objects.get(pk=pk)
+            
