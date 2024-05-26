@@ -212,3 +212,36 @@ Response:
   "status": 200
 }
 ```
+
+### 6. WebSocket Endpoint (Send and receive messages)
+
+Endpoint: `/ws/chat/<str:conversation_id>/?token=<access_token>`
+
+> Example Full Endpoint: `ws://localhost:8000/ws/chat/<str:conversation_id>/?token=<access_token>`
+
+- `conversation_id: Conversation ID between users`
+  - Example: `92660037-7f6e-4934-afd5-218024692005`
+- `token: {Your access token}`
+
+Request:
+
+- Headers:
+  - `Origin: http://127.0.0.1:8000`
+- Params:
+  - `token: {Your access token}`
+
+```json
+{
+  "message": "Hello",
+  "recipientId": "48dc569e-4ef2-4fef-940e-41a92ebfdcc2"
+}
+```
+
+Response:
+
+```json
+{
+  "message": "Hello",
+  "recipientId": "48dc569e-4ef2-4fef-940e-41a92ebfdcc2"
+}
+```
