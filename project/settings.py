@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt.token_blacklist',
     'app',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -124,7 +125,8 @@ AUTH_USER_MODEL = 'app.UserAccount'
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 # SIMPLE_JWT
@@ -138,4 +140,12 @@ CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels.layers.InMemoryChannelLayer'
     }
+}
+
+# DRF-SPECTACULAR
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Real-Time Chat Application API',
+    'DESCRIPTION': 'This Real-Time Chat Application is built using Django Rest Framework (DRF) for handling RESTful APIs and Django Channels for WebSocket communication, enabling real-time messaging between users.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
 }

@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework import serializers, status, permissions, generics
 from rest_framework.response import Response
+from drf_spectacular.utils import extend_schema
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
@@ -14,7 +15,7 @@ class RegisterView(APIView):
     """
     API view to creates a new user account.
     """
-    class InputSerializer(serializers.ModelSerializer):
+    class UserInputSerializer(serializers.ModelSerializer):
         """
         Serializer for user account registration.
         """
@@ -36,12 +37,16 @@ class RegisterView(APIView):
             attrs.pop('confirm_password')
 
             return attrs
-
+    
+    @extend_schema(
+        request=UserInputSerializer,
+        responses={201: UserInputSerializer},
+    )
     def post(self, request):
         """
-        POST: Creates a new user account.
+        Creates a new user account.
         """
-        serializer = self.InputSerializer(data=request.data)
+        serializer = self.UserInputSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         password = serializer.validated_data['password']
 
@@ -55,7 +60,7 @@ class RegisterView(APIView):
 
         user = create_user_account(**serializer.validated_data)
 
-        response = self.InputSerializer(user)
+        response = self.UserInputSerializer(user)
 
         return Response({
             'success': True,
@@ -69,12 +74,12 @@ class UserListView(generics.ListAPIView):
     """
     Displays list of users, excluding the authenticated user.
     """
-    class OutputSerializer(serializers.ModelSerializer):
+    class UserOutputSerializer(serializers.ModelSerializer):
         class Meta:
             model = User
             fields = ['id', 'first_name', 'last_name']
 
-    serializer_class = OutputSerializer
+    serializer_class = UserOutputSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -85,13 +90,19 @@ class UserChatView(APIView):
     """
     API view to display conversation (chat) between users
     """
-    class OutputSerializer(serializers.ModelSerializer):
+    class ChatOutputSerializer(serializers.ModelSerializer):
         """
-        Serializer for outputting conversation -
-        with all messages and their senders
+        Serializer for representing a conversation -
+        with its messages and sender.
         """
         class MessageSerializer(serializers.ModelSerializer):
+            """
+            Nested Serializer for representing conversation messages.
+            """
             class UserSerializer(serializers.ModelSerializer):
+                """
+                Nested Serializer for representing user
+                """
                 class Meta:
                     model = User
                     fields = ['id', 'first_name', 'last_name']
@@ -110,11 +121,13 @@ class UserChatView(APIView):
 
     permission_classes = [permissions.IsAuthenticated]
 
+    @extend_schema(
+        responses={200: ChatOutputSerializer},
+    )
     def get(self, request, pk):
         """
-        GET: Displays a conversation with messages between users-
+        Displays a conversation with messages between users-
         (authenticated user and recipient user)
-        - pk: recipientUserId
         """
         recipient_user = get_user(pk)
 
@@ -130,7 +143,7 @@ class UserChatView(APIView):
         # Create conversation if it doesn't exist
         conversation = get_or_create_conversation(request.user, recipient_user)
 
-        response = self.OutputSerializer(conversation)
+        response = self.ChatOutputSerializer(conversation)
         return Response({
             'success': True,
             'msg': 'User conversation with messages retrieved successfully.',

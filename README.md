@@ -71,6 +71,9 @@ python manage.py runserver
 
 ## API Documentation
 
+Access swagger docs by going to this url:
+`http://localhost:8000/api/docs/`
+
 ### 1. User Registration
 
 Endpoint: `POST /api/register/`
